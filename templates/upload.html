@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drag and Drop Upload</title>
+    <title>Upload Excel</title>
     <style>
         #drop_zone {
-            width: 300px;         /* 设置元素的宽度为300像素 */
-            height: 200px;        /* 设置元素的高度为200像素 */
-            border: 2px dashed #bbb; /* 设置元素边框为2像素宽，样式为虚线，颜色为#bbb（浅灰色） */
-            border-radius: 5px;   /* 设置元素边框的圆角为5像素 */
-            background-color: #f4f4f4; /* 设置元素的背景色为#f4f4f4（浅灰色） */
-            text-align: center;   /* 设置元素内的文本居中对齐 */
-            line-height: 200px;   /* 设置元素内文本的行高为200像素，通常用于垂直居中单行文本 */
-            color: #bbb;          /* 设置元素内文本的颜色为#bbb（浅灰色） */
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #bbb;
+            border-radius: 5px;
+            background-color: #f4f4f4;
+            text-align: center;
+            line-height: 200px;
+            color: #bbb;
+            margin-bottom: 20px;
         }
         #drop_zone.highlight {
             border-color: purple;
@@ -22,62 +23,79 @@
     </style>
 </head>
 <body>
-    <div id="drop_zone">Drop files here</div>
+    <h2>Upload Excel</h2>
+    <!-- 拖放区域 -->
+    <div id="drop_zone" draggable="true">Drop files here or click to upload</div>
+    <!-- 文件选择表单 -->
+    <form id="upload_form" action="/upload" method="post" enctype="multipart/form-data" style="display: none;">
+        <input type="file" name="excel_file" id="excel_file" />
+        <input type="submit" value="Upload" />
+    </form>
+    <!-- 输出区域 -->
     <output id="list"></output>
     <script>
         var dropZone = document.getElementById('drop_zone');
         var list = document.getElementById('list');
-        //dragover:当文件在拖拽区域上方移动时触发。这个事件阻止了默认行为和事件冒泡，并添加了highlight类来高亮显示拖拽区域。
+        var uploadForm = document.getElementById('upload_form');
+        var fileInput = document.getElementById('excel_file');
+        // Drag and Drop
+        // 当文件在拖拽区域上方移动时触发
         dropZone.addEventListener('dragover', function(e) {
-            //阻止事件冒泡，确保当前元素处理该事件，而不是其父元素
             e.stopPropagation();
-            //阻止事件的默认行为，这样浏览器就不会执行其默认操作（例如打开链接或导航）
             e.preventDefault();
-            //设置拖拽效果为“copy”，表示这是一个复制操作。这通常用于文件拖拽，表示文件将被复制到目标位置，而不是移动。
             e.dataTransfer.dropEffect = 'copy';
-            //添加“highlight”类到当前元素（dropZone），以改变其样式（例如边框颜色和背景色）
             this.classList.add('highlight');
         });
-        //dragleave:当文件离开拖拽区域时触发。这个事件移除了highlight类，使拖拽区域回到原始样式。
+
+        // 当文件离开拖拽区域时触发
         dropZone.addEventListener('dragleave', function(e) {
-            //移除“highlight”类到当前元素（dropZone）
             this.classList.remove('highlight');
         });
-        // 当文件被释放到拖拽区域时触发drop事件。
+
+        // 当文件被释放到拖拽区域时触发
         dropZone.addEventListener('drop', function(e) {
-            // 阻止事件冒泡，确保当前元素处理该事件。
             e.stopPropagation();
-            // 阻止事件的默认行为，避免浏览器执行默认操作。
             e.preventDefault();
-            // 从事件的数据传输对象中获取拖拽的文件列表。
             var files = e.dataTransfer.files;
-            // 创建一个新的FormData对象，用于存储要发送给服务器的文件。
+            handleFiles(files);
+            this.classList.remove('highlight');
+        });
+
+        // File input
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        // 处理上传文件的函数
+        function handleFiles(files) {
+            // 检查文件类型是否为 xlsx
+            var isXlsx = Array.from(files).every(file => file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            if (!isXlsx) {
+                list.innerHTML = 'Error: File type must be xlsx.';
+                return;
+            }
+
             var formData = new FormData();
-            // 遍历文件列表，并将每个文件添加到FormData对象中。
             for (var i = 0, file; file = files[i]; i++) {
-                // append方法将文件添加到FormData中，并给它一个'file'的键名。
-                // 注意：如果有多个文件，它们都使用相同的键名，服务器需要能够处理这种情况。
                 formData.append('file', file);
             }
-            // 创建一个新的XMLHttpRequest对象，用于发送AJAX请求。
+
             var xhr = new XMLHttpRequest();
-            // 设置请求的类型为POST，并指定请求的URL为'/upload/'。
             xhr.open('POST', '/upload/', true);
-            // 当请求完成加载时，执行此函数。
             xhr.onload = function () {
-            // 检查服务器响应的状态码。
                 if (this.status === 200) {
-                    // 如果状态码为200，表示请求成功，更新输出区域显示上传成功。
-                    list.innerHTML = '上传成功.';
+                    list.innerHTML = 'Upload successful.';
                 } else {
-                    // 否则，更新输出区域显示上传失败。
-                    list.innerHTML = '上传失败.';
+                    list.innerHTML = 'Upload failed.';
                 }
             };
-            // 发送包含文件的FormData对象到服务器。
             xhr.send(formData);
-            // 移除拖拽区域的高亮样式，因为文件已经被释放。
-            this.classList.remove('highlight');
+        }
+
+
+        // Click to trigger file input
+        dropZone.addEventListener('click', function() {
+            fileInput.click();
         });
     </script>
 </body>

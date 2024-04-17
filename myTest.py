@@ -10,9 +10,9 @@ engine = create_engine(DATABASE_URL)
 
 @app.route('/')
 def index():
-    return render_template('test.html')
+    return render_template('upload.html')
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload/', methods=['POST'])
 def upload_excel():
     # 获取上传的Excel文件
     file = request.files['excel_file']

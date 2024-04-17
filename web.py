@@ -1,7 +1,9 @@
 
 import os
-from flask import Flask, render_template, request
-from werkzeug.utils import secure_filename  # 导入secure_filename函数
+from flask import Flask, render_template, request, jsonify
+import pandas as pd
+from sqlalchemy import create_engine
+
 
 # 创建一个Flask应用实例  
 app = Flask(__name__)
@@ -9,6 +11,11 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 #将上传文件夹的路径添加到Flask应用的配置中。
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+app = Flask(__name__)
+# 数据库连接配置
+DATABASE_URL = 'mysql+pymysql://username:password@localhost:3306/mydatabase'
+engine = create_engine(DATABASE_URL)
 
 # 定义一个路由和处理函数 回归分析URL地址在ip:端口/huigui/或/regression/
 @app.route('/huigui/')
@@ -22,19 +29,19 @@ def classification():
     return render_template('classification.html')
 
 @app.route('/upload/', methods=['GET', 'POST'])
-def upload_file():
+def upload_excel_to_database():
     if request.method == 'POST':
-        # 检查是否有文件部分
-        if 'file' not in request.files:
-            return 'No file part'
-        file = request.files['file']
-        # 如果用户没有选择文件，浏览器也会提交一个空文件部分，没有文件名
-        if file.filename == '':
-            return 'No selected file'
-        if file:
-            filename = secure_filename(file.filename)  # 使用secure_filename确保文件名安全
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return 'File uploaded successfully'
+        try:
+            # 获取上传的Excel文件
+            file = request.files['excel_file']
+            # 使用pandas读取Excel文件
+            df = pd.read_excel(file)
+            # 将DataFrame内容写入数据库
+            df.to_sql('my_table', engine, if_exists='append', index=False)
+            return 'Excel file uploaded and data imported into the database successfully!'
+        except Exception as e:
+            # 如果发生异常，返回包含详细错误信息的响应
+            return jsonify({'error': str(e)}), 500
     return render_template('upload.html')
 
     # 如果运行这个脚本，则启动开发服务器

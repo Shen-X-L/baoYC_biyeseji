@@ -29,7 +29,7 @@
                              data-bs-parent="#accordionExample">
                             <div class="accordion-body">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-primary" type="button">数据导入</button>
+                                    <button class="btn btn-primary" type="button" onclick="redirectToUpload()">数据导入</button>
                                     <button class="btn btn-primary" type="button">原始数据展示</button>
                                     <button class="btn btn-primary" type="button">数据预处理</button>
                                     <button class="btn btn-primary" type="button">处理后数据展示</button>
@@ -137,5 +137,11 @@
         </div>
     </div>
     </div>
+<script>
+    function redirectToUpload() {
+        // 跳转到指定页面
+        window.location.href = "/upload/";
+    }
+</script>
 </body>
 </html>
