@@ -1,0 +1,5 @@
+打开终端，只要到 requirements.txt 所在的目录下，使用如下命令 ，就能在当前的 python 环境中导入所有需要的包。
+pip install -r requirements.txt
+
+或者批量安装离线安装包
+pip install --no-index --find-links=your_offline_packages -r requirements.txt
